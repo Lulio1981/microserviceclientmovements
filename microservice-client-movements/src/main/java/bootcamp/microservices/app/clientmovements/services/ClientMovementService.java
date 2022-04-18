@@ -18,8 +18,8 @@ public interface ClientMovementService {
 
 	public Mono<ClientMovement> deleteLogic(ClientMovement clientMovement);
 
-	public Flux<ClientMovement> findByMovementTypeOrigin(Integer movementType, String idOriginMovement);
+	public Flux<ClientMovement> findByMovementTypeOrigin(String idOriginMovement);
 
-	public Flux<ClientMovement> findByMovementTypeDestiny(Integer movementType, String idDestinyMovement);
+	public Flux<ClientMovement> findByMovementTypeDestiny(String idDestinyMovement);
 
 }

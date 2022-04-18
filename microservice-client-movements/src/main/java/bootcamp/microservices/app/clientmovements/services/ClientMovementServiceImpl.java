@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import bootcamp.microservices.app.clientmovements.documents.ClientMovement;
 import bootcamp.microservices.app.clientmovements.exceptions.customs.CustomNotFoundException;
 import bootcamp.microservices.app.clientmovements.repository.ClientMovementRepository;
+import bootcamp.microservices.app.clientmovements.utils.BalanceCalculate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +20,10 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 	@Autowired
 	private ClientMovementRepository clientMovementRepository;
 
+	@Autowired
+	private BalanceCalculate balanceCalculate;
+	
+	
 	@Override
 	public Flux<ClientMovement> findAll() {
 		return clientMovementRepository.findAll()
@@ -42,14 +47,18 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 
 	@Override
 	public Mono<ClientMovement> save(ClientMovement clientMovement) {
-		return clientMovementRepository.save(clientMovement).flatMap(cm -> {
-			if (cm.getOperationType().getShortName().equalsIgnoreCase("TRANS")
-					|| cm.getOperationType().getShortName().equalsIgnoreCase("CREPAY")) {
-				cm.setMovementType(1);
-				return clientMovementRepository.save(cm);
-			}
-			return Mono.just(clientMovement);
-		});
+		if (Double.compare(balanceCalculate.balanceAmount(clientMovement.getId()), clientMovement.getAmount()) > 0) {
+			return clientMovementRepository.save(clientMovement).flatMap(cm -> {
+				if (cm.getOperationType().getShortName().equalsIgnoreCase("TRANS")
+						|| cm.getOperationType().getShortName().equalsIgnoreCase("CREPAY")) {
+					cm.setMovementType(1);
+					return clientMovementRepository.save(cm);
+				}
+				return Mono.just(clientMovement);
+			});
+		}
+
+		return (Mono.error(new CustomNotFoundException("Insufficient balance")));
 	}
 
 	@Override
@@ -69,12 +78,13 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 	}
 
 	@Override
-	public Flux<ClientMovement> findByMovementTypeOrigin(Integer movementType, String idDestinyMovement) {
-		return clientMovementRepository.findByMovementTypeAndIdDestinyMovement(movementType, idDestinyMovement);
+	public Flux<ClientMovement> findByMovementTypeOrigin(String idDestinyMovement) {
+		return clientMovementRepository.findByIdDestinyMovement(idDestinyMovement);
 	}
 
 	@Override
-	public Flux<ClientMovement> findByMovementTypeDestiny(Integer movementType, String idOriginMovement) {
-		return clientMovementRepository.findByMovementTypeAndIdOriginMovement(movementType, idOriginMovement);
+	public Flux<ClientMovement> findByMovementTypeDestiny(String idOriginMovement) {
+		return clientMovementRepository.findByIdOriginMovement(idOriginMovement);
 	}
+
 }
