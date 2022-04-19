@@ -22,8 +22,7 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 
 	@Autowired
 	private BalanceCalculate balanceCalculate;
-	
-	
+
 	@Override
 	public Flux<ClientMovement> findAll() {
 		return clientMovementRepository.findAll()
@@ -87,4 +86,8 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 		return clientMovementRepository.findByIdOriginMovement(idOriginMovement);
 	}
 
+	@Override
+	public Mono<Double> CalculateBalanceByIdOriginMovement(String idOriginMovement){
+		return Mono.just(balanceCalculate.balanceAmount(idOriginMovement));
+	}
 }

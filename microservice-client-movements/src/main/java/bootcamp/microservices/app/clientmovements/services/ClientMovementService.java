@@ -22,4 +22,6 @@ public interface ClientMovementService {
 
 	public Flux<ClientMovement> findByMovementTypeDestiny(String idDestinyMovement);
 
+	public Mono<Double> CalculateBalanceByIdOriginMovement(String idOriginMovement);
+
 }

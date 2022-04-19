@@ -56,4 +56,9 @@ public class ClientMovementController {
 			@PathVariable String idDestinyMovement) {
 		return clientMovementService.findByMovementTypeDestiny(idDestinyMovement);
 	}
+	
+	@GetMapping("/idProduct/{idProduct}")
+	public Mono<Double> balanceProductCalculate(@PathVariable String idProduct) {
+		return clientMovementService.CalculateBalanceByIdOriginMovement(idProduct);
+	}
 }
