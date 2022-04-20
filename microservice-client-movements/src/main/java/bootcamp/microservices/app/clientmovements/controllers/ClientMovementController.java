@@ -46,19 +46,22 @@ public class ClientMovementController {
 	}
 
 	@GetMapping("idOriginMovement/{idOriginMovement}")
-	public Flux<ClientMovement> searchByMovementAndIdOriginCompany(@PathVariable Integer movementType,
-			@PathVariable String idOriginMovement) {
+	public Flux<ClientMovement> searchByMovementAndIdOriginCompany(@PathVariable String idOriginMovement) {
 		return clientMovementService.findByMovementTypeOrigin(idOriginMovement);
 	}
 
 	@GetMapping("idDestinyMovement/{idDestinyMovement}")
-	public Flux<ClientMovement> searchByMovementAndIdDestinyCompany(@PathVariable Integer movementType,
-			@PathVariable String idDestinyMovement) {
+	public Flux<ClientMovement> searchByMovementAndIdDestinyCompany(@PathVariable String idDestinyMovement) {
 		return clientMovementService.findByMovementTypeDestiny(idDestinyMovement);
 	}
-	
+
 	@GetMapping("/idProduct/{idProduct}")
 	public Mono<Double> balanceProductCalculate(@PathVariable String idProduct) {
 		return clientMovementService.CalculateBalanceByIdOriginMovement(idProduct);
+	}
+
+	@GetMapping("idOriginMovementComplete/{idOriginMovementComplete")
+	public Flux<ClientMovement> searchAllMovementByProduct(@PathVariable String idOriginMovementComplete) {
+		return clientMovementService.findAllMovementsByIdProduct(idOriginMovementComplete);
 	}
 }

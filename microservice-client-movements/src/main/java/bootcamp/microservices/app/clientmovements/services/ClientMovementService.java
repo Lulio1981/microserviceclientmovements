@@ -24,4 +24,5 @@ public interface ClientMovementService {
 
 	public Mono<Double> CalculateBalanceByIdOriginMovement(String idOriginMovement);
 
+	public Flux<ClientMovement> findAllMovementsByIdProduct(String idOriginMovement);
 }

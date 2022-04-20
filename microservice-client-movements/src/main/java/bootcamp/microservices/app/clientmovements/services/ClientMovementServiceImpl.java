@@ -46,7 +46,8 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 
 	@Override
 	public Mono<ClientMovement> save(ClientMovement clientMovement) {
-		if (Double.compare(balanceCalculate.balanceAmount(clientMovement.getId()), clientMovement.getAmount()) > 0) {
+		if (Double.compare(balanceCalculate.balanceAmount(clientMovement.getId()), clientMovement.getAmount()) > 0 || 
+				!clientMovement.getOperationType().equals("DEP")) {
 			return clientMovementRepository.save(clientMovement).flatMap(cm -> {
 				if (cm.getOperationType().getShortName().equalsIgnoreCase("TRANS")
 						|| cm.getOperationType().getShortName().equalsIgnoreCase("CREPAY")) {
@@ -56,7 +57,6 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 				return Mono.just(clientMovement);
 			});
 		}
-
 		return (Mono.error(new CustomNotFoundException("Insufficient balance")));
 	}
 
@@ -87,7 +87,13 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 	}
 
 	@Override
-	public Mono<Double> CalculateBalanceByIdOriginMovement(String idOriginMovement){
+	public Mono<Double> CalculateBalanceByIdOriginMovement(String idOriginMovement) {
 		return Mono.just(balanceCalculate.balanceAmount(idOriginMovement));
+	}
+
+	@Override
+	public Flux<ClientMovement> findAllMovementsByIdProduct(String idOriginMovement) {
+		return Flux.merge(clientMovementRepository.findByIdOriginMovement(idOriginMovement),
+				clientMovementRepository.findByIdDestinyMovement(idOriginMovement));
 	}
 }
