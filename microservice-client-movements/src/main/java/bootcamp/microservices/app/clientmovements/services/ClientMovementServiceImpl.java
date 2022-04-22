@@ -7,9 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import bootcamp.microservices.app.clientmovements.documents.ClientMovement;
+import bootcamp.microservices.app.clientmovements.documents.OperationType;
 import bootcamp.microservices.app.clientmovements.exceptions.customs.CustomNotFoundException;
 import bootcamp.microservices.app.clientmovements.repository.ClientMovementRepository;
+import bootcamp.microservices.app.clientmovements.repository.OperationTypeRepository;
 import bootcamp.microservices.app.clientmovements.utils.BalanceCalculate;
+import bootcamp.microservices.app.clientmovements.utils.Constants;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +22,9 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 
 	@Autowired
 	private ClientMovementRepository clientMovementRepository;
+	
+	@Autowired
+	private OperationTypeRepository operationTypeRepository;
 
 	@Autowired
 	private BalanceCalculate balanceCalculate;
@@ -46,17 +52,26 @@ public class ClientMovementServiceImpl implements ClientMovementService {
 
 	@Override
 	public Mono<ClientMovement> save(ClientMovement clientMovement) {
-		if (Double.compare(balanceCalculate.balanceAmount(clientMovement.getId()), clientMovement.getAmount()) > 0 || 
-				!clientMovement.getOperationType().equals("DEP")) {
+		if (Double.compare(balanceCalculate.balanceAmount(clientMovement.getId()), clientMovement.getAmount()) > 0) {
 			return clientMovementRepository.save(clientMovement).flatMap(cm -> {
 				if (cm.getOperationType().getShortName().equalsIgnoreCase("TRANS")
 						|| cm.getOperationType().getShortName().equalsIgnoreCase("CREPAY")) {
 					cm.setMovementType(1);
 					return clientMovementRepository.save(cm);
 				}
+				if (balanceCalculate
+						.numberOfClientAccountOperations(clientMovement.getIdOriginMovement()) > balanceCalculate
+								.numberOperationsMonth(clientMovement.getIdOriginMovement())) {
+					OperationType operationType = operationTypeRepository.findByShortName(Constants.COMISSION).block();
+					cm.setOperationType(operationType);
+					cm.setMovementType(Constants.PASSIVE);
+					cm.setAmount(Constants.COMISSION_VALUE);
+					clientMovementRepository.save(cm);
+				}
 				return Mono.just(clientMovement);
 			});
 		}
+
 		return (Mono.error(new CustomNotFoundException("Insufficient balance")));
 	}
 
